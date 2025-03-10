@@ -1,10 +1,14 @@
 package main
 
 import (
-	"EduCommentSync/internal/server"
+	"EduCommentSync/internal/service"
+	"log"
 )
 
 func main() {
-	// Запуск сервера
-	server.StartServer()
+	srv := service.New()
+	err := srv.Run()
+	if err != nil {
+		log.Fatal("Error starting server: ", err)
+	}
 }

@@ -11,6 +11,7 @@ type Config struct {
 	TokenFile   string
 	ServerPort  string
 	DatabaseURL string
+	AuthURL     string
 }
 
 func LoadConfig() Config {
@@ -23,5 +24,6 @@ func LoadConfig() Config {
 		TokenFile:   os.Getenv("TOKEN_FILE"),
 		ServerPort:  os.Getenv("SERVER_PORT"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
+		AuthURL:     os.Getenv("AUTH_URL"),
 	}
 }

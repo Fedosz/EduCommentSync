@@ -1,45 +1,74 @@
-package server
+package service
 
 import (
 	"EduCommentSync/internal/auth"
 	"EduCommentSync/internal/config"
+	"EduCommentSync/internal/models"
 	"EduCommentSync/internal/sheets"
 	"fmt"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"sync"
 )
 
-var (
-	// Глобальная переменная для хранения токена
+type Service struct {
+	cfg         config.Config
+	dataBase    *gorm.DB
 	clientSync  *http.Client
 	clientMutex sync.Mutex
-)
+}
 
-func StartServer(cfg config.Config) {
+func New() *Service {
+	cfg := config.LoadConfig()
+
+	return &Service{cfg: cfg}
+}
+
+func (s *Service) Run() error {
+	cfg := config.LoadConfig()
+	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+	s.dataBase = db
+	models.AutoMigrate(s.dataBase)
+
+	// Запуск сервера
+	err = s.StartServer(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) StartServer(cfg config.Config) error {
 	port := cfg.ServerPort
 
-	http.HandleFunc("/auth", authHandler)                     // Маршрут для авторизации
-	http.HandleFunc("/oauth2callback", oauth2CallbackHandler) // Обработчик ответа от Google
-	http.HandleFunc("/getSheetData", getSheetDataHandler)     // Ручка для получения данных из Google Sheets
+	http.HandleFunc("/auth", s.authHandler)                     // Маршрут для авторизации
+	http.HandleFunc("/oauth2callback", s.oauth2CallbackHandler) // Обработчик ответа от Google
+	http.HandleFunc("/getSheetData", s.getSheetDataHandler)     // Ручка для получения данных из Google Sheets
 
 	// Запускаем сервер
 	log.Printf("Starting server on port %s...", port)
-	url := "http://localhost:8080/auth"
+	url := cfg.AuthURL
 	fmt.Println("Перейдите по следующей ссылке для авторизации:", url)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		log.Fatal("Error starting server: ", err)
+		return err
 	}
+	return nil
 }
 
-func authHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) authHandler(w http.ResponseWriter, r *http.Request) {
 	// Генерация URL авторизации
 	authURL := auth.GetAuthURL()
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
-func oauth2CallbackHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) oauth2CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Code not found", http.StatusBadRequest)
@@ -54,20 +83,20 @@ func oauth2CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Сохраняем токен в глобальную переменную для дальнейшего использования
-	clientMutex.Lock()
-	clientSync = client
-	clientMutex.Unlock()
+	s.clientMutex.Lock()
+	s.clientSync = client
+	s.clientMutex.Unlock()
 
 	// Отправляем сообщение, что авторизация успешна
 	fmt.Fprintln(w, "Authentication successful! You can now use the application.")
 }
 
-func getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	// Проверяем, есть ли токен
-	clientMutex.Lock()
-	defer clientMutex.Unlock()
+	s.clientMutex.Lock()
+	defer s.clientMutex.Unlock()
 
-	if clientSync == nil {
+	if s.clientSync == nil {
 		http.Error(w, "Authentication required", http.StatusUnauthorized)
 		return
 	}
@@ -80,7 +109,7 @@ func getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем данные из Google Sheets
-	data, err := sheets.GetSheetData(clientSync, spreadsheetId)
+	data, err := sheets.GetSheetData(s.clientSync, spreadsheetId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get sheet data: %v", err), http.StatusInternalServerError)
 		return
