@@ -33,7 +33,10 @@ func (s *Service) Run() error {
 		return err
 	}
 	s.dataBase = db
-	models.AutoMigrate(s.dataBase)
+	err = models.AutoMigrate(s.dataBase)
+	if err != nil {
+		return err
+	}
 
 	// Запуск сервера
 	err = s.StartServer(cfg)

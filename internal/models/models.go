@@ -41,9 +41,11 @@ type Teachers struct {
 }
 
 // AutoMigrate выполняет миграции
-func AutoMigrate(db *gorm.DB) {
+func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(&Students{}, &ColabLinks{}, &RawComments{}, &Comments{}, &Teachers{})
 	if err != nil {
-		return
+		return err
 	}
+
+	return nil
 }
