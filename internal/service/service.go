@@ -3,7 +3,8 @@ package service
 import (
 	"EduCommentSync/internal/auth"
 	"EduCommentSync/internal/config"
-	"EduCommentSync/internal/models"
+	"EduCommentSync/internal/processor"
+	"EduCommentSync/internal/repository"
 	"EduCommentSync/internal/sheets"
 	"fmt"
 	"gorm.io/driver/postgres"
@@ -15,7 +16,7 @@ import (
 
 type Service struct {
 	cfg         config.Config
-	dataBase    *gorm.DB
+	repo        repository.Repository
 	clientSync  *http.Client
 	clientMutex sync.Mutex
 }
@@ -27,19 +28,17 @@ func New() *Service {
 }
 
 func (s *Service) Run() error {
-	cfg := config.LoadConfig()
-	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(s.cfg.DatabaseURL), &gorm.Config{})
 	if err != nil {
 		return err
 	}
-	s.dataBase = db
-	err = models.AutoMigrate(s.dataBase)
+	s.repo, err = repository.NewRepository(db)
 	if err != nil {
 		return err
 	}
 
 	// Запуск сервера
-	err = s.StartServer(cfg)
+	err = s.StartServer()
 	if err != nil {
 		return err
 	}
@@ -47,8 +46,8 @@ func (s *Service) Run() error {
 	return nil
 }
 
-func (s *Service) StartServer(cfg config.Config) error {
-	port := cfg.ServerPort
+func (s *Service) StartServer() error {
+	port := s.cfg.ServerPort
 
 	http.HandleFunc("/auth", s.authHandler)                     // Маршрут для авторизации
 	http.HandleFunc("/oauth2callback", s.oauth2CallbackHandler) // Обработчик ответа от Google
@@ -56,7 +55,7 @@ func (s *Service) StartServer(cfg config.Config) error {
 
 	// Запускаем сервер
 	log.Printf("Starting server on port %s...", port)
-	url := cfg.AuthURL
+	url := s.cfg.AuthURL
 	fmt.Println("Перейдите по следующей ссылке для авторизации:", url)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
@@ -105,14 +104,26 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем данные из таблицы
-	spreadsheetId := r.URL.Query().Get("spreadsheetId")
-	if spreadsheetId == "" {
-		http.Error(w, "SpreadsheetId is required", http.StatusBadRequest)
+	link := r.URL.Query().Get("tables_link")
+	if link == "" {
+		http.Error(w, "tables_link is required", http.StatusBadRequest)
+		return
+	}
+
+	fileID, err := processor.ExtractFileID(link)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fileName, err := sheets.GetFileName(s.clientSync, fileID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Получаем данные из Google Sheets
-	data, err := sheets.GetSheetData(s.clientSync, spreadsheetId)
+	_, err = sheets.GetSheetData(s.clientSync, fileID, fileName)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get sheet data: %v", err), http.StatusInternalServerError)
 		return
@@ -120,5 +131,5 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Отправляем данные в виде JSON
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	//w.Write(data)
 }
