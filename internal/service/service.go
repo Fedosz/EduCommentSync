@@ -52,6 +52,7 @@ func (s *Service) StartServer() error {
 	http.HandleFunc("/auth", s.authHandler)                     // Маршрут для авторизации
 	http.HandleFunc("/oauth2callback", s.oauth2CallbackHandler) // Обработчик ответа от Google
 	http.HandleFunc("/getSheetData", s.getSheetDataHandler)     // Ручка для получения данных из Google Sheets
+	http.HandleFunc("/loadXls", s.loadExcelFile)
 
 	// Запускаем сервер
 	log.Printf("Starting server on port %s...", port)
@@ -123,13 +124,74 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем данные из Google Sheets
-	_, err = sheets.GetSheetData(s.clientSync, fileID, fileName)
+	data, err := sheets.GetSheetData(s.clientSync, fileID, fileName)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get sheet data: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Отправляем данные в виде JSON
-	w.Header().Set("Content-Type", "application/json")
-	//w.Write(data)
+	err = s.addInfo(data)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to add data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	links, err := s.repo.GetColabLinksByWorkName(data.Name)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get colab links: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = s.processCommentsFromFiles(links)
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to save comments: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = s.process()
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error processing comments: %v", err), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) loadExcelFile(w http.ResponseWriter, r *http.Request) {
+	s.clientMutex.Lock()
+	defer s.clientMutex.Unlock()
+
+	if s.clientSync == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	comments, err := s.repo.GetComments()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get comments: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	fullComments, err := s.EnrichComments(comments)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to enrich comments: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	file := sheets.GenerateFile(fullComments)
+
+	buf, err := file.WriteToBuffer()
+	if err != nil {
+		http.Error(w, "Не удалось создать файл", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=Grades.xlsx")
+	w.Header().Set("Content-Length", fmt.Sprint(buf.Len()))
+
+	if _, err = w.Write(buf.Bytes()); err != nil {
+		http.Error(w, "Не удалось отправить файл", http.StatusInternalServerError)
+		return
+	}
 }

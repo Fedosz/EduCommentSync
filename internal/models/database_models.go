@@ -6,6 +6,7 @@ import "gorm.io/gorm"
 type Student struct {
 	ID       int    `gorm:"primaryKey"`
 	Name     string `gorm:"size:255;not null"`
+	SurName  string `gorm:"size:255;not null"`
 	MailHash string `gorm:"size:255;not null"`
 }
 

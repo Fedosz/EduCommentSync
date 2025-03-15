@@ -11,7 +11,11 @@ type Repository interface {
 	AddComments(comments []models.Comment) error
 	GetRawComments() ([]models.RawComment, error)
 	AddStudents(studentInfos []models.StudentInfo) ([]models.Student, error)
-	AddColabLinks(db *gorm.DB, workName string, studentInfos []models.StudentInfo, students []models.Student) error
+	AddColabLinks(workName string, studentInfos []models.StudentInfo, students []models.Student) error
+	GetColabLinksByWorkName(workName string) ([]models.ColabLink, error)
+	AddRawComments(comments []models.RawComment) error
+	GetComments() ([]models.Comment, error)
+	GetStudentById(id int) (*models.Student, error)
 }
 
 type repo struct {

@@ -2,20 +2,34 @@ package repository
 
 import (
 	"EduCommentSync/internal/models"
+	"errors"
+	"gorm.io/gorm"
 )
 
 func (r *repo) AddStudents(studentInfos []models.StudentInfo) ([]models.Student, error) {
 	var students []models.Student
 
+	// Проходим по каждому студенту
 	for _, studentInfo := range studentInfos {
-		student := models.Student{
-			Name:     studentInfo.Name,
-			MailHash: studentInfo.Mail,
-		}
+		var student models.Student
 
-		result := r.dataBase.Create(&student)
+		// Проверяем, существует ли студент в базе данных
+		result := r.dataBase.Where("name = ? AND mail = ?", studentInfo.Name, studentInfo.Mail).First(&student)
 		if result.Error != nil {
-			return nil, result.Error
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				student = models.Student{
+					Name:     studentInfo.Name,
+					SurName:  studentInfo.Surname,
+					MailHash: studentInfo.Mail,
+				}
+
+				result = r.dataBase.Create(&student)
+				if result.Error != nil {
+					return nil, result.Error
+				}
+			} else {
+				return nil, result.Error
+			}
 		}
 
 		students = append(students, student)

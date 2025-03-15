@@ -32,9 +32,10 @@ func GetSheetData(client *http.Client, spreadsheetId string, tableName string) (
 
 		if len(row) >= 4 {
 			info := models.StudentInfo{
-				Name: row[1].(string),
-				Mail: row[2].(string),
-				Link: row[3].(string),
+				Name:    row[1].(string),
+				Surname: row[2].(string),
+				Mail:    row[3].(string),
+				Link:    row[4].(string),
 			}
 
 			tableInfo.Students = append(tableInfo.Students, info)
