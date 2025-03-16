@@ -18,9 +18,9 @@ func (r *repo) AddStudents(studentInfos []models.StudentInfo) ([]models.Student,
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				student = models.Student{
-					Name:     studentInfo.Name,
-					SurName:  studentInfo.Surname,
-					MailHash: studentInfo.Mail,
+					Name:    studentInfo.Name,
+					SurName: studentInfo.Surname,
+					Mail:    studentInfo.Mail,
 				}
 
 				result = r.dataBase.Create(&student)

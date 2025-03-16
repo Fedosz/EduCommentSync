@@ -7,6 +7,20 @@ import (
 	"net/http"
 )
 
+// getSheetDataHandler возвращает данные из Google Sheets
+// @Summary Получение данных из Google Sheets
+// @Description Получает данные из Google Sheets по ссылке и обрабатывает их
+// @Tags sheets
+// @Accept json
+// @Produce json
+// @Param tables_link query string true "Ссылка на Google Sheets"
+// @Param sheet_name query string true "Имя листа в Google Sheets"
+// @Success 200 {string} string "Данные успешно обработаны"
+// @Failure 400 {string} string "tables_link is required"
+// @Failure 400 {string} string "sheet_name is required"
+// @Failure 401 {string} string "Authentication required"
+// @Failure 500 {string} string "Failed to get sheet data"
+// @Router /getSheetData [get]
 func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	s.clientMutex.Lock()
 	defer s.clientMutex.Unlock()
@@ -19,6 +33,11 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 	link := r.URL.Query().Get("tables_link")
 	if link == "" {
 		http.Error(w, "tables_link is required", http.StatusBadRequest)
+		return
+	}
+	sheetName := r.URL.Query().Get("sheet_name")
+	if sheetName == "" {
+		http.Error(w, "sheet_name is required", http.StatusBadRequest)
 		return
 	}
 
@@ -34,7 +53,7 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := sheets.GetSheetData(s.clientSync, fileID, fileName)
+	data, err := sheets.GetSheetData(s.clientSync, fileID, fileName, sheetName)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get sheet data: %v", err), http.StatusInternalServerError)
 		return
@@ -73,7 +92,7 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags teachers
 // @Accept json
 // @Produce json
-// @Param mail query string true "Email преподавателя"
+// @Param display_name query string true "Display name преподавателя"
 // @Success 200 {string} string "Преподаватель успешно добавлен"
 // @Failure 400 {string} string "mail is required"
 // @Failure 401 {string} string "Authentication required"
@@ -88,15 +107,15 @@ func (s *Service) addAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mail := r.URL.Query().Get("mail")
-	if mail == "" {
-		http.Error(w, "mail is required", http.StatusBadRequest)
+	displayName := r.URL.Query().Get("display_name")
+	if displayName == "" {
+		http.Error(w, "display_name is required", http.StatusBadRequest)
 		return
 	}
 
-	err := s.repo.AddTeacher(mail)
+	err := s.repo.AddTeacher(displayName)
 	if err != nil {
-		http.Error(w, "Error adding teacher mail", http.StatusInternalServerError)
+		http.Error(w, "Error adding teacher display_name", http.StatusInternalServerError)
 		return
 	}
 
@@ -104,6 +123,18 @@ func (s *Service) addAuthor(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Преподаватель успешно добавлен"))
 }
 
+// archive архивирует данные
+// @Summary Архивирование данных
+// @Description Архивирует данные из основных таблиц в архивные. Требуется подтверждение (передача слова 'archive' в query-параметре).
+// @Tags archive
+// @Accept json
+// @Produce json
+// @Param approval query string true "Подтверждение архивирования (должно быть 'archive')"
+// @Success 200 {string} string "Данные успешно архивированы"
+// @Failure 400 {string} string "enter word 'archive' to continue"
+// @Failure 401 {string} string "Authentication required"
+// @Failure 500 {string} string "Error adding teacher mail"
+// @Router /archive [post]
 func (s *Service) archive(w http.ResponseWriter, r *http.Request) {
 	s.clientMutex.Lock()
 	defer s.clientMutex.Unlock()

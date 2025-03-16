@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/xuri/excelize/v2"
 	"log"
+	"sort"
 	"strings"
 )
 
@@ -51,6 +52,10 @@ func GenerateFile(comments []models.StudentComment) *excelize.File {
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), student.SurName)
 		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), student.Name)
 		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), student.MailHash)
+
+		sort.Slice(studentComments, func(i, j int) bool {
+			return studentComments[i].TaskNumber < studentComments[j].TaskNumber
+		})
 
 		col := 4
 		for _, workName := range uniqueWorkNames {

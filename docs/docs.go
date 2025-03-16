@@ -31,8 +31,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Email преподавателя",
-                        "name": "mail",
+                        "description": "Display name преподавателя",
+                        "name": "display_name",
                         "in": "query",
                         "required": true
                     }
@@ -46,6 +46,56 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "mail is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding teacher mail",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/archive": {
+            "post": {
+                "description": "Архивирует данные из основных таблиц в архивные. Требуется подтверждение (передача слова 'archive' в query-параметре).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "archive"
+                ],
+                "summary": "Архивирование данных",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Подтверждение архивирования (должно быть 'archive')",
+                        "name": "approval",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные успешно архивированы",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "enter word 'archive' to continue",
                         "schema": {
                             "type": "string"
                         }
@@ -125,6 +175,98 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to get exports",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/getSheetData": {
+            "get": {
+                "description": "Получает данные из Google Sheets по ссылке и обрабатывает их",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sheets"
+                ],
+                "summary": "Получение данных из Google Sheets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ссылка на Google Sheets",
+                        "name": "tables_link",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Имя листа в Google Sheets",
+                        "name": "sheet_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные успешно обработаны",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "sheet_name is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get sheet data",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/loadXls": {
+            "get": {
+                "description": "Генерирует Excel-файл на основе комментариев и возвращает его для скачивания",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Генерация Excel-файла",
+                "responses": {
+                    "200": {
+                        "description": "Excel-файл с комментариями",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось отправить файл",
                         "schema": {
                             "type": "string"
                         }

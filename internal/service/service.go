@@ -45,16 +45,6 @@ func (s *Service) Run() error {
 	return nil
 }
 
-// @title EduCommentSync API
-// @version 1.0
-// @description API для синхронизации комментариев и работы с Google Sheets.
-// @termsOfService http://swagger.io/terms/
-// @contact.name API Support
-// @contact.email support@educommentsync.com
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host localhost:8080
-// @BasePath /
 func (s *Service) StartServer() error {
 	port := s.cfg.ServerPort
 

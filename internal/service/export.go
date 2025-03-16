@@ -9,6 +9,20 @@ import (
 	"strconv"
 )
 
+// loadExcelFile генерирует и возвращает Excel-файл с комментариями
+// @Summary Генерация Excel-файла
+// @Description Генерирует Excel-файл на основе комментариев и возвращает его для скачивания
+// @Tags files
+// @Accept json
+// @Produce application/octet-stream
+// @Success 200 {file} file "Excel-файл с комментариями"
+// @Failure 401 {string} string "Authentication required"
+// @Failure 500 {string} string "Failed to get comments"
+// @Failure 500 {string} string "Failed to enrich comments"
+// @Failure 500 {string} string "Не удалось создать файл"
+// @Failure 500 {string} string "Не удалось сохранить файл"
+// @Failure 500 {string} string "Не удалось отправить файл"
+// @Router /loadXls [get]
 func (s *Service) loadExcelFile(w http.ResponseWriter, r *http.Request) {
 	s.clientMutex.Lock()
 	defer s.clientMutex.Unlock()

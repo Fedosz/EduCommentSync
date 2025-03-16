@@ -4,6 +4,8 @@ import (
 	"EduCommentSync/internal/models"
 	"bytes"
 	"gorm.io/gorm"
+	"log"
+	"os"
 )
 
 type Repository interface {
@@ -28,14 +30,26 @@ type repo struct {
 }
 
 func NewRepository(db *gorm.DB) (*repo, error) {
-	err := models.AutoMigrate(db)
-	if err != nil {
-		return nil, err
-	}
+	if _, err := os.Stat(".migration_done"); os.IsNotExist(err) {
+		err = models.AutoMigrate(db)
+		if err != nil {
+			return nil, err
+		}
 
-	err = models.AutoMigrateArhive(db)
-	if err != nil {
-		return nil, err
+		err = models.AutoMigrateArhive(db)
+		if err != nil {
+			return nil, err
+		}
+
+		file, err := os.Create(".migration_done")
+		if err != nil {
+			log.Fatalf("Failed to create migration flag: %v", err)
+		}
+		file.Close()
+
+		log.Println("Migrations completed")
+	} else {
+		log.Println("Migrations already done")
 	}
 
 	return &repo{dataBase: db}, nil

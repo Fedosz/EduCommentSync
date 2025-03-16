@@ -15,9 +15,9 @@ paths:
       - application/json
       description: Добавляет нового преподавателя по его email
       parameters:
-      - description: Email преподавателя
+      - description: Display name преподавателя
         in: query
-        name: mail
+        name: display_name
         required: true
         type: string
       produces:
@@ -42,6 +42,40 @@ paths:
       summary: Добавление преподавателя
       tags:
       - teachers
+  /archive:
+    post:
+      consumes:
+      - application/json
+      description: Архивирует данные из основных таблиц в архивные. Требуется подтверждение
+        (передача слова 'archive' в query-параметре).
+      parameters:
+      - description: Подтверждение архивирования (должно быть 'archive')
+        in: query
+        name: approval
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные успешно архивированы
+          schema:
+            type: string
+        "400":
+          description: enter word 'archive' to continue
+          schema:
+            type: string
+        "401":
+          description: Authentication required
+          schema:
+            type: string
+        "500":
+          description: Error adding teacher mail
+          schema:
+            type: string
+      summary: Архивирование данных
+      tags:
+      - archive
   /getExport:
     get:
       consumes:
@@ -86,4 +120,66 @@ paths:
       summary: Получение списка экспортов
       tags:
       - exports
+  /getSheetData:
+    get:
+      consumes:
+      - application/json
+      description: Получает данные из Google Sheets по ссылке и обрабатывает их
+      parameters:
+      - description: Ссылка на Google Sheets
+        in: query
+        name: tables_link
+        required: true
+        type: string
+      - description: Имя листа в Google Sheets
+        in: query
+        name: sheet_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные успешно обработаны
+          schema:
+            type: string
+        "400":
+          description: sheet_name is required
+          schema:
+            type: string
+        "401":
+          description: Authentication required
+          schema:
+            type: string
+        "500":
+          description: Failed to get sheet data
+          schema:
+            type: string
+      summary: Получение данных из Google Sheets
+      tags:
+      - sheets
+  /loadXls:
+    get:
+      consumes:
+      - application/json
+      description: Генерирует Excel-файл на основе комментариев и возвращает его для
+        скачивания
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Excel-файл с комментариями
+          schema:
+            type: file
+        "401":
+          description: Authentication required
+          schema:
+            type: string
+        "500":
+          description: Не удалось отправить файл
+          schema:
+            type: string
+      summary: Генерация Excel-файла
+      tags:
+      - files
 swagger: "2.0"

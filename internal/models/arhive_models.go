@@ -3,10 +3,10 @@ package models
 import "gorm.io/gorm"
 
 type StudentArchive struct {
-	ID       int    `gorm:"primaryKey"`
-	Name     string `gorm:"size:255;not null"`
-	SurName  string `gorm:"size:255;not null"`
-	MailHash string `gorm:"size:255;not null"`
+	ID      int    `gorm:"primaryKey"`
+	Name    string `gorm:"size:255;not null"`
+	SurName string `gorm:"size:255;not null"`
+	Mail    string `gorm:"size:255;not null"`
 }
 
 type ColabLinkArchive struct {

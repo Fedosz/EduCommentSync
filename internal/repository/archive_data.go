@@ -60,9 +60,9 @@ func (r *repo) archiveStudents(tx *gorm.DB) error {
 
 	for _, student := range students {
 		archive := models.StudentArchive{
-			Name:     student.Name,
-			SurName:  student.SurName,
-			MailHash: student.MailHash,
+			Name:    student.Name,
+			SurName: student.SurName,
+			Mail:    student.Mail,
 		}
 		if err := tx.Create(&archive).Error; err != nil {
 			tx.Rollback()

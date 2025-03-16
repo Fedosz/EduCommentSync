@@ -58,7 +58,7 @@ func (s *Service) processCommentsFromFiles(links []models.ColabLink) error {
 		for _, comment := range comments.Comments {
 			rawComments = append(rawComments, models.RawComment{
 				Text:      comment.Content,
-				Author:    comment.Author.EmailAddress,
+				Author:    comment.Author.DisplayName,
 				StudentID: link.StudentID,
 				WorkName:  link.WorkName,
 			})
@@ -89,7 +89,7 @@ func (s *Service) EnrichComments(comments []models.Comment) ([]models.StudentCom
 			WorkName:   comment.WorkName,
 			Name:       student.Name,
 			SurName:    student.SurName,
-			MailHash:   student.MailHash,
+			MailHash:   student.Mail,
 		})
 	}
 
