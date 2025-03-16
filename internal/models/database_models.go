@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 // Student - таблица студентов
 type Student struct {
@@ -49,9 +52,16 @@ type CommentInfo struct {
 	IsDone     bool
 }
 
+// ExportFile Структура для хранения информации о выгрузке
+type ExportFile struct {
+	ID         int       `gorm:"primaryKey"`
+	ExportDate time.Time `gorm:"not null"`
+	FileData   []byte    `gorm:"type:bytea"`
+}
+
 // AutoMigrate выполняет миграции
 func AutoMigrate(db *gorm.DB) error {
-	err := db.AutoMigrate(&Student{}, &ColabLink{}, &RawComment{}, &Comment{}, &Teacher{})
+	err := db.AutoMigrate(&Student{}, &ColabLink{}, &RawComment{}, &Comment{}, &Teacher{}, &ExportFile{})
 	if err != nil {
 		return err
 	}

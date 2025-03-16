@@ -13,9 +13,9 @@ e) process into comments and delete raw comments ✔
 a) get from db  ✔
 b) process  ✔
 c) make xls  ✔
-d) save in db ...
-### 5. LoadByID (id)
-a) load from db
+d) save in db ✔
+### 5. LoadByID (id) ✔
+a) load from db ✔
 ### 6. Clear (clear word)
 c) delete all info from main db (except xls)
 # Extras

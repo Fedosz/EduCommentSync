@@ -2,6 +2,7 @@ package repository
 
 import (
 	"EduCommentSync/internal/models"
+	"bytes"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,10 @@ type Repository interface {
 	AddRawComments(comments []models.RawComment) error
 	GetComments() ([]models.Comment, error)
 	GetStudentById(id int) (*models.Student, error)
+	AddExport(fileBytes *bytes.Buffer) error
+	GetExports() ([]models.ExportFile, error)
+	GetExportByID(id int64) (*models.ExportFile, error)
+	ArchiveData() error
 }
 
 type repo struct {

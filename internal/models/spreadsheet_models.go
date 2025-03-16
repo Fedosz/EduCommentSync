@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type StudentInfo struct {
 	Name    string
 	Surname string
@@ -23,4 +25,10 @@ type StudentComment struct {
 	Name       string
 	SurName    string
 	MailHash   string
+}
+
+// ExportResponse Структура для ответа (ID и дата)
+type ExportResponse struct {
+	ID         int       `json:"id"`
+	ExportDate time.Time `json:"export_date"`
 }

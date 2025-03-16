@@ -3,14 +3,17 @@ package service
 import (
 	"EduCommentSync/internal/auth"
 	"EduCommentSync/internal/config"
+	"EduCommentSync/internal/models"
 	"EduCommentSync/internal/processor"
 	"EduCommentSync/internal/repository"
 	"EduCommentSync/internal/sheets"
+	"encoding/json"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 )
 
@@ -53,6 +56,9 @@ func (s *Service) StartServer() error {
 	http.HandleFunc("/oauth2callback", s.oauth2CallbackHandler) // Обработчик ответа от Google
 	http.HandleFunc("/getSheetData", s.getSheetDataHandler)     // Ручка для получения данных из Google Sheets
 	http.HandleFunc("/loadXls", s.loadExcelFile)
+	http.HandleFunc("/getExportsList", s.getExportList)
+	http.HandleFunc("/getExport", s.getExportByID)
+	http.HandleFunc("/addTeacher", s.addAuthor)
 
 	// Запускаем сервер
 	log.Printf("Starting server on port %s...", port)
@@ -186,11 +192,103 @@ func (s *Service) loadExcelFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = s.repo.AddExport(buf)
+	if err != nil {
+		http.Error(w, "Не удалось сохранить файл", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", "attachment; filename=Grades.xlsx")
 	w.Header().Set("Content-Length", fmt.Sprint(buf.Len()))
 
 	if _, err = w.Write(buf.Bytes()); err != nil {
+		http.Error(w, "Не удалось отправить файл", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) addAuthor(w http.ResponseWriter, r *http.Request) {
+	s.clientMutex.Lock()
+	defer s.clientMutex.Unlock()
+
+	if s.clientSync == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	mail := r.URL.Query().Get("mail")
+	if mail == "" {
+		http.Error(w, "id is required", http.StatusBadRequest)
+		return
+	}
+
+	err := s.repo.AddTeacher(mail)
+	if err != nil {
+		http.Error(w, "Error adding teacher mail", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) getExportList(w http.ResponseWriter, r *http.Request) {
+	s.clientMutex.Lock()
+	defer s.clientMutex.Unlock()
+
+	if s.clientSync == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	exports, err := s.repo.GetExports()
+	if err != nil {
+		http.Error(w, "Failed to get exports", http.StatusInternalServerError)
+		return
+	}
+
+	var response []models.ExportResponse
+	for _, export := range exports {
+		response = append(response, models.ExportResponse{
+			ID:         export.ID,
+			ExportDate: export.ExportDate,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (s *Service) getExportByID(w http.ResponseWriter, r *http.Request) {
+	s.clientMutex.Lock()
+	defer s.clientMutex.Unlock()
+
+	if s.clientSync == nil {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	// Получаем данные из таблицы
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "id is required", http.StatusBadRequest)
+		return
+	}
+
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Wrong ID format", http.StatusBadRequest)
+		return
+	}
+
+	export, err := s.repo.GetExportByID(int64(intID))
+	if err != nil {
+		http.Error(w, "Failed to get export", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=Grades_%s.xlsx", id))
+
+	if _, err = w.Write(export.FileData); err != nil {
 		http.Error(w, "Не удалось отправить файл", http.StatusInternalServerError)
 		return
 	}
