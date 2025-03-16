@@ -1,0 +1,89 @@
+definitions:
+  models.ExportResponse:
+    properties:
+      export_date:
+        type: string
+      id:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /addTeacher:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет нового преподавателя по его email
+      parameters:
+      - description: Email преподавателя
+        in: query
+        name: mail
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Преподаватель успешно добавлен
+          schema:
+            type: string
+        "400":
+          description: mail is required
+          schema:
+            type: string
+        "401":
+          description: Authentication required
+          schema:
+            type: string
+        "500":
+          description: Error adding teacher mail
+          schema:
+            type: string
+      summary: Добавление преподавателя
+      tags:
+      - teachers
+  /getExport:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает экспорт по указанному ID
+      parameters:
+      - description: ID экспорта
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Файл успешно скачан
+      summary: Получение экспорта по ID
+      tags:
+      - exports
+  /getExportsList:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех экспортов из базы данных
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список экспортов
+          schema:
+            items:
+              $ref: '#/definitions/models.ExportResponse'
+            type: array
+        "401":
+          description: Authentication required
+          schema:
+            type: string
+        "500":
+          description: Failed to get exports
+          schema:
+            type: string
+      summary: Получение списка экспортов
+      tags:
+      - exports
+swagger: "2.0"

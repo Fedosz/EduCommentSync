@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-func (r *repo) GetRawComments() ([]models.RawComment, error) {
+func (r *repo) GetRawComments(workName string) ([]models.RawComment, error) {
 	var rawComments []models.RawComment
-	result := r.dataBase.Find(&rawComments)
+	result := r.dataBase.Where("work_name = ?", workName).Find(&rawComments)
 	if result.Error != nil {
 		return nil, fmt.Errorf("ошибка при получении данных: %v", result.Error)
 	}

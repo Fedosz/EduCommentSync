@@ -16,8 +16,7 @@ c) make xls  ✔
 d) save in db ✔
 ### 5. LoadByID (id) ✔
 a) load from db ✔
-### 6. Clear (clear word)
-c) delete all info from main db (except xls)
+### 6. Archive (archive word) ✔
 # Extras
 a) swagger  
 b) reformat code  

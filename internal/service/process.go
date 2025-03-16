@@ -9,8 +9,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-func (s *Service) process() error {
-	rawComments, err := s.repo.GetRawComments()
+func (s *Service) process(workName string) error {
+	rawComments, err := s.repo.GetRawComments(workName)
 	if err != nil {
 		return err
 	}

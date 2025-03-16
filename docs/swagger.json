@@ -1,0 +1,138 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/addTeacher": {
+            "post": {
+                "description": "Добавляет нового преподавателя по его email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teachers"
+                ],
+                "summary": "Добавление преподавателя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email преподавателя",
+                        "name": "mail",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Преподаватель успешно добавлен",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "mail is required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding teacher mail",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/getExport": {
+            "get": {
+                "description": "Возвращает экспорт по указанному ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "exports"
+                ],
+                "summary": "Получение экспорта по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID экспорта",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Файл успешно скачан"
+                    }
+                }
+            }
+        },
+        "/getExportsList": {
+            "get": {
+                "description": "Возвращает список всех экспортов из базы данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "exports"
+                ],
+                "summary": "Получение списка экспортов",
+                "responses": {
+                    "200": {
+                        "description": "Список экспортов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ExportResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get exports",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.ExportResponse": {
+            "type": "object",
+            "properties": {
+                "export_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

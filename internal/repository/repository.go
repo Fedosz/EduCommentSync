@@ -10,7 +10,7 @@ type Repository interface {
 	GetTeachers() ([]models.Teacher, error)
 	AddTeacher(sysName string) error
 	AddComments(comments []models.Comment) error
-	GetRawComments() ([]models.RawComment, error)
+	GetRawComments(workName string) ([]models.RawComment, error)
 	AddStudents(studentInfos []models.StudentInfo) ([]models.Student, error)
 	AddColabLinks(workName string, studentInfos []models.StudentInfo, students []models.Student) error
 	GetColabLinksByWorkName(workName string) ([]models.ColabLink, error)
@@ -29,6 +29,11 @@ type repo struct {
 
 func NewRepository(db *gorm.DB) (*repo, error) {
 	err := models.AutoMigrate(db)
+	if err != nil {
+		return nil, err
+	}
+
+	err = models.AutoMigrateArhive(db)
 	if err != nil {
 		return nil, err
 	}

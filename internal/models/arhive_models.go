@@ -1,5 +1,7 @@
 package models
 
+import "gorm.io/gorm"
+
 type StudentArchive struct {
 	ID       int    `gorm:"primaryKey"`
 	Name     string `gorm:"size:255;not null"`
@@ -29,4 +31,14 @@ type CommentArchive struct {
 	TaskNumber int    `gorm:"not null"`
 	IsDone     bool   `gorm:"not null"`
 	WorkName   string `gorm:"not null"`
+}
+
+// AutoMigrateArhive выполняет миграции
+func AutoMigrateArhive(db *gorm.DB) error {
+	err := db.AutoMigrate(&StudentArchive{}, &ColabLinkArchive{}, &RawCommentArchive{}, &CommentArchive{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
