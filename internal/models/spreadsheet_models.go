@@ -24,7 +24,7 @@ type StudentComment struct {
 	WorkName   string
 	Name       string
 	SurName    string
-	MailHash   string
+	Mail       string
 }
 
 // ExportResponse Структура для ответа (ID и дата)

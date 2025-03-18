@@ -6,7 +6,7 @@ import (
 )
 
 // GetWorkNamesUnique возвращает список уникальных названий работ
-func GetWorkNamesUnique(comments []models.StudentComment) []string {
+func GetWorkNamesUnique(comments []*models.StudentComment) []string {
 	workNames := make(map[string]struct{})
 	for _, comment := range comments {
 		workNames[comment.WorkName] = struct{}{}

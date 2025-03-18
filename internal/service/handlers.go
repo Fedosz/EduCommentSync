@@ -1,6 +1,7 @@
 package service
 
 import (
+	"EduCommentSync/internal/crypto"
 	"EduCommentSync/internal/processor"
 	"EduCommentSync/internal/sheets"
 	"fmt"
@@ -59,6 +60,12 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = s.EncryptStudents(data)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encrypt students data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
 	err = s.addInfo(data)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to add data: %v", err), http.StatusInternalServerError)
@@ -84,6 +91,9 @@ func (s *Service) getSheetDataHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Error processing comments: %v", err), http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Данные успешно обработаны"))
 }
 
 // addAuthor добавляет преподавателя
@@ -113,7 +123,13 @@ func (s *Service) addAuthor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.repo.AddTeacher(displayName)
+	name, err := crypto.Encrypt(s.cfg.SecretKey, displayName)
+	if err != nil {
+		http.Error(w, "Error encrypting teacher name", http.StatusInternalServerError)
+		return
+	}
+
+	err = s.repo.AddTeacher(name)
 	if err != nil {
 		http.Error(w, "Error adding teacher display_name", http.StatusInternalServerError)
 		return
@@ -152,7 +168,10 @@ func (s *Service) archive(w http.ResponseWriter, r *http.Request) {
 
 	err := s.repo.ArchiveData()
 	if err != nil {
-		http.Error(w, "Error adding teacher mail", http.StatusInternalServerError)
+		http.Error(w, "Error archiving", http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Данные успешно архивированы"))
 }

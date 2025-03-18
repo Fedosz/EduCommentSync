@@ -1,6 +1,7 @@
 package service
 
 import (
+	"EduCommentSync/internal/crypto"
 	"EduCommentSync/internal/models"
 	"EduCommentSync/internal/processor"
 	"context"
@@ -20,6 +21,12 @@ func (s *Service) process(workName string) error {
 		return err
 	}
 
+	for i, teacher := range teachers {
+		teachers[i].SysName, err = crypto.Decrypt(s.cfg.SecretKey, teacher.SysName)
+		if err != nil {
+			return err
+		}
+	}
 	comments := processor.ProcessComments(rawComments, teachers)
 
 	err = s.repo.AddComments(comments)
@@ -71,8 +78,8 @@ func (s *Service) processCommentsFromFiles(links []models.ColabLink) error {
 }
 
 // EnrichComments объединяет комментарии и студентов
-func (s *Service) EnrichComments(comments []models.Comment) ([]models.StudentComment, error) {
-	var combined []models.StudentComment
+func (s *Service) EnrichComments(comments []models.Comment) ([]*models.StudentComment, error) {
+	var combined []*models.StudentComment
 
 	for _, comment := range comments {
 		student, err := s.repo.GetStudentById(comment.StudentID)
@@ -80,7 +87,7 @@ func (s *Service) EnrichComments(comments []models.Comment) ([]models.StudentCom
 			return nil, err
 		}
 
-		combined = append(combined, models.StudentComment{
+		combined = append(combined, &models.StudentComment{
 			CommentID:  comment.ID,
 			StudentID:  comment.StudentID,
 			Text:       comment.Text,
@@ -89,9 +96,61 @@ func (s *Service) EnrichComments(comments []models.Comment) ([]models.StudentCom
 			WorkName:   comment.WorkName,
 			Name:       student.Name,
 			SurName:    student.SurName,
-			MailHash:   student.Mail,
+			Mail:       student.Mail,
 		})
 	}
 
+	err := s.DecryptStudents(combined)
+	if err != nil {
+		return nil, err
+	}
+
 	return combined, nil
+}
+
+func (s *Service) EncryptStudents(info *models.TableInfo) error {
+	for i, data := range info.Students {
+		encryptedMail, err := crypto.Encrypt(s.cfg.SecretKey, data.Mail)
+		if err != nil {
+			return err
+		}
+		encryptedName, err := crypto.Encrypt(s.cfg.SecretKey, data.Name)
+		if err != nil {
+			return err
+		}
+		encryptedSurname, err := crypto.Encrypt(s.cfg.SecretKey, data.Surname)
+		if err != nil {
+			return err
+		}
+
+		info.Students[i].Mail = encryptedMail
+		info.Students[i].Name = encryptedName
+		info.Students[i].Surname = encryptedSurname
+	}
+
+	return nil
+}
+
+func (s *Service) DecryptStudents(info []*models.StudentComment) error {
+	for i, data := range info {
+		decryptedMail, err := crypto.Decrypt(s.cfg.SecretKey, data.Mail)
+		if err != nil {
+			return err
+		}
+		decryptedName, err := crypto.Decrypt(s.cfg.SecretKey, data.Name)
+		if err != nil {
+			return err
+		}
+		decryptedSurname, err := crypto.Decrypt(s.cfg.SecretKey, data.SurName)
+		if err != nil {
+			return err
+		}
+
+		info[i].Mail = decryptedMail
+		info[i].Name = decryptedName
+		info[i].SurName = decryptedSurname
+
+	}
+
+	return nil
 }

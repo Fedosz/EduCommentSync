@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func GenerateFile(comments []models.StudentComment) *excelize.File {
+func GenerateFile(comments []*models.StudentComment) *excelize.File {
 	f := excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -37,7 +37,7 @@ func GenerateFile(comments []models.StudentComment) *excelize.File {
 		f.SetCellValue("Sheet1", cell, header)
 	}
 
-	studentsMap := make(map[int][]models.StudentComment)
+	studentsMap := make(map[int][]*models.StudentComment)
 	for _, comment := range comments {
 		studentsMap[comment.StudentID] = append(studentsMap[comment.StudentID], comment)
 	}
@@ -51,7 +51,7 @@ func GenerateFile(comments []models.StudentComment) *excelize.File {
 		student := studentComments[0]
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), student.SurName)
 		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), student.Name)
-		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), student.MailHash)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), student.Mail)
 
 		sort.Slice(studentComments, func(i, j int) bool {
 			return studentComments[i].TaskNumber < studentComments[j].TaskNumber

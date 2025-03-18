@@ -14,7 +14,7 @@ func (r *repo) AddStudents(studentInfos []models.StudentInfo) ([]models.Student,
 		var student models.Student
 
 		// Проверяем, существует ли студент в базе данных
-		result := r.dataBase.Where("name = ? AND mail = ?", studentInfo.Name, studentInfo.Mail).First(&student)
+		result := r.dataBase.Where("mail = ?", studentInfo.Mail).First(&student)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				student = models.Student{

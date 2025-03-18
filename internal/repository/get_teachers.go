@@ -12,5 +12,6 @@ func (r *repo) GetTeachers() ([]models.Teacher, error) {
 	if result.Error != nil {
 		return nil, fmt.Errorf("ошибка при получении данных: %v", result.Error)
 	}
+
 	return teachers, nil
 }

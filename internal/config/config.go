@@ -12,6 +12,7 @@ type Config struct {
 	ServerPort  string
 	DatabaseURL string
 	AuthURL     string
+	SecretKey   []byte
 }
 
 func LoadConfig() Config {
@@ -25,5 +26,6 @@ func LoadConfig() Config {
 		ServerPort:  os.Getenv("SERVER_PORT"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		AuthURL:     os.Getenv("AUTH_URL"),
+		SecretKey:   []byte(os.Getenv("SECRET_KEY")),
 	}
 }

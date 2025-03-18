@@ -14,7 +14,7 @@ func GetSheetData(client *http.Client, spreadsheetId string, tableName string, s
 		return nil, fmt.Errorf("failed to create Sheets service: %v", err)
 	}
 
-	rangeData := sheetName + "!A2:E100"
+	rangeData := sheetName + "!A2:E1000"
 	resp, err := service.Spreadsheets.Values.Get(spreadsheetId, rangeData).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve data from sheet: %v", err)
