@@ -22,7 +22,4 @@ go.work.sum
 # migration info file
 .migration_done
 
-# env file
-.env
-
 credentials
